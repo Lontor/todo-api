@@ -1,5 +1,5 @@
 CREATE TABLE tasks (
-    id UUID PRIMARY KEY,
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     user_id UUID REFERENCES users(id) ON DELETE CASCADE,
     description TEXT NOT NULL,
     status VARCHAR(20) NOT NULL DEFAULT 'to do',
