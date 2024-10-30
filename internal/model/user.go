@@ -17,6 +17,6 @@ type User struct {
 	ID           uuid.UUID `json:"id"`
 	Email        string    `json:"email"`
 	PasswordHash string    `json:"-"`
-	AccountType  UserType  `json:"AccountType"`
+	AccountType  UserType  `json:"accountType"`
 	CreatedAt    time.Time `json:"createdAt"`
 }
