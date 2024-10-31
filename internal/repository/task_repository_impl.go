@@ -2,69 +2,69 @@ package repository
 
 import (
 	"context"
-	"database/sql"
+	"fmt"
 
 	"github.com/Lontor/todo-api/internal/model"
 	"github.com/google/uuid"
+	"gorm.io/gorm"
 )
 
 type taskRepository struct {
-	db *sql.DB
+	db *gorm.DB
 }
 
-func NewTaskRepository(db *sql.DB) TaskRepository {
+func NewTaskRepository(db *gorm.DB) TaskRepository {
 	return &taskRepository{db}
 }
 
-func (r *taskRepository) Create(ctx context.Context, task *model.Task) error {
-	query := `INSERT INTO tasks (user_id, description, status, created_at, updated_at) VALUES ($1, $2, $3, NOW(), NOW())`
-	_, err := r.db.ExecContext(ctx, query, task.UserID, task.Description, task.Status)
-	return err
+func (r *taskRepository) Create(ctx context.Context, task model.Task) error {
+	return r.db.Create(&task).Error
 }
 
-func (r *taskRepository) GetByID(ctx context.Context, id uuid.UUID) (*model.Task, error) {
+func (r *taskRepository) GetByUserID(ctx context.Context, userID uuid.UUID) ([]model.Task, error) {
+	var tasks []model.Task
+	err := r.db.Where(&model.Task{UserID: userID}).Find(&tasks).Error
+	return tasks, err
+}
+
+func (r *taskRepository) GetByUserIDAndStatus(ctx context.Context, userID uuid.UUID, status model.TaskStatus) ([]model.Task, error) {
+	var tasks []model.Task
+	err := r.db.Where(&model.Task{UserID: userID, Status: status}).Find(&tasks).Error
+	return tasks, err
+}
+
+func (r *taskRepository) GetByID(ctx context.Context, id uuid.UUID) (model.Task, error) {
 	var task model.Task
-	query := `SELECT id, user_is, description, status, created_at, updated_at FROM tasks WHERE id = $1`
-	err := r.db.QueryRowContext(ctx, query, id).Scan(&task.ID, &task.UserID, &task.Description, &task.Status, &task.CreatedAt, &task.UpdatedAt)
-	if err != nil {
-		return nil, err
-	}
-	return &task, nil
+	err := r.db.Where(&model.Task{ID: id}).First(&task).Error
+	return task, err
 }
 
-func (r *taskRepository) GetByUserID(ctx context.Context, userID uuid.UUID) ([]*model.Task, error) {
-	var tasks []*model.Task
-	query := `SELECT id, user_id, description, status, created_at, updated_at FROM tasks WHERE user_id = $1`
-	rows, err := r.db.QueryContext(ctx, query, userID)
-	if err != nil {
-		return nil, err
+func (r *taskRepository) Update(ctx context.Context, id uuid.UUID, description string, status model.TaskStatus) error {
+	updates := map[string]interface{}{}
+
+	if description != "" {
+		updates["description"] = description
 	}
-	defer rows.Close()
-
-	for rows.Next() {
-		var task model.Task
-		if err := rows.Scan(&task.ID, &task.UserID, &task.Description, &task.Status, &task.CreatedAt, &task.UpdatedAt); err != nil {
-			return nil, err
-		}
-		tasks = append(tasks, &task)
+	if status != "" {
+		updates["status"] = status
 	}
-	return tasks, nil
-}
 
-func (r *taskRepository) UpdateDescription(ctx context.Context, id uuid.UUID, description string) error {
-	query := `UPDATE tasks SET description = $1, updated_at = NOW() WHERE id = $2`
-	_, err := r.db.ExecContext(ctx, query, description, id)
-	return err
-}
+	if len(updates) == 0 {
+		return fmt.Errorf("no fields to update")
+	}
 
-func (r *taskRepository) UpdateStatus(ctx context.Context, id uuid.UUID, status model.TaskStatus) error {
-	query := `UPDATE tasks SET status = $1, updated_at = NOW() WHERE id = $2`
-	_, err := r.db.ExecContext(ctx, query, status, id)
-	return err
+	result := r.db.Model(&model.Task{}).Where("id = ?", id).Updates(updates)
+	if result.Error != nil {
+		return result.Error
+	}
+
+	if result.RowsAffected == 0 {
+		return fmt.Errorf("no task found with id %s", id)
+	}
+
+	return nil
 }
 
 func (r *taskRepository) Delete(ctx context.Context, id uuid.UUID) error {
-	query := `DELETE FROM tasks WHERE id = $1`
-	_, err := r.db.ExecContext(ctx, query, id)
-	return err
+	return r.db.Delete(&model.Task{}, id).Error
 }
