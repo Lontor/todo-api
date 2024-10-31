@@ -14,9 +14,9 @@ const (
 )
 
 type User struct {
-	ID           uuid.UUID `gorm:"type:uuid;primaryKey;" json:"id"`
-	Email        string    `gorm:"uniqueIndex" json:"email"`
-	PasswordHash string    `json:"-"`
-	AccountType  UserType  `json:"accountType"`
-	CreatedAt    time.Time `json:"createdAt"`
+	ID           uuid.UUID `gorm:"type:uuid;primaryKey;not null;" json:"id"`
+	Email        string    `gorm:"uniqueIndex;not null" json:"email" validate:"required,email"`
+	PasswordHash string    `gorm:"not null" json:"-" validate:"required"`
+	AccountType  UserType  `gorm:"not null" json:"accountType" validate:"required"`
+	CreatedAt    time.Time `gorm:"not null" json:"createdAt"`
 }
