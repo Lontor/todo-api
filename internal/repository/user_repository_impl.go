@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/Lontor/todo-api/internal/model"
+	"github.com/go-playground/validator/v10"
 	"github.com/google/uuid"
 	"gorm.io/gorm"
 )
@@ -18,6 +19,11 @@ func NewUserRepository(db *gorm.DB) UserRepository {
 }
 
 func (r *userRepository) Create(ctx context.Context, user model.User) error {
+	validate := validator.New()
+	err := validate.Struct(user)
+	if err != nil {
+		return err
+	}
 	return r.db.Create(&user).Error
 }
 
@@ -62,5 +68,12 @@ func (r *userRepository) Update(ctx context.Context, user model.User) error {
 }
 
 func (r *userRepository) Delete(ctx context.Context, id uuid.UUID) error {
-	return r.db.Delete(&model.User{}, id).Error
+	result := r.db.Delete(&model.User{}, id)
+	if result.Error != nil {
+		return result.Error
+	}
+	if result.RowsAffected == 0 {
+		return fmt.Errorf("no user found with id %s", id)
+	}
+	return nil
 }
