@@ -77,6 +77,31 @@ func TestCreateUser_WithEmptyRequiredFields(t *testing.T) {
 	assert.Error(t, err)
 }
 
+func TestGetUsers(t *testing.T) {
+	clearDB()
+	users := make([]model.User, 3)
+
+	for i := range users {
+		users[i] = getTestUser()
+
+		err := db.Create(&users[i]).Error
+		require.NoError(t, err)
+	}
+
+	receivedUsers, err := userRepo.Get(context.Background())
+	assert.NoError(t, err)
+	require.Equal(t, len(users), len(receivedUsers))
+
+	for i, user := range receivedUsers {
+		assert.NoError(t, err)
+		assert.Equal(t, users[i].ID, user.ID)
+		assert.Equal(t, users[i].Email, user.Email)
+		assert.Equal(t, users[i].PasswordHash, user.PasswordHash)
+		assert.Equal(t, users[i].AccountType, user.AccountType)
+		assert.Equal(t, users[i].CreatedAt.Equal(user.CreatedAt), true)
+	}
+}
+
 func TestGetUserByEmail(t *testing.T) {
 	clearDB()
 	user := getTestUser()

@@ -19,7 +19,7 @@ var taskRepo TaskRepository
 func getTestUser() model.User {
 	user := model.User{
 		ID:           uuid.New(),
-		Email:        "test@example.com",
+		Email:        fmt.Sprintf("test%s@example.com", uuid.New()),
 		PasswordHash: "hashed_password",
 		AccountType:  model.UserTypeRegular,
 		CreatedAt:    time.Now(),
