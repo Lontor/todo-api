@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/Lontor/todo-api/internal/model"
+	"github.com/go-playground/validator/v10"
 	"github.com/google/uuid"
 	"gorm.io/gorm"
 )
@@ -18,18 +19,47 @@ func NewTaskRepository(db *gorm.DB) TaskRepository {
 }
 
 func (r *taskRepository) Create(ctx context.Context, task model.Task) error {
+	validate := validator.New()
+	err := validate.Struct(task)
+	if err != nil {
+		return err
+	}
+
+	var user model.User
+	if err := r.db.First(&user, task.UserID).Error; err != nil {
+		return fmt.Errorf("user with ID %s does not exist", task.UserID)
+	}
+
 	return r.db.Create(&task).Error
 }
 
 func (r *taskRepository) GetByUserID(ctx context.Context, userID uuid.UUID) ([]model.Task, error) {
+	var count int64
+	err := r.db.Model(&model.User{}).Where("id = ?", userID).Count(&count).Error
+	if err != nil {
+		return nil, err
+	}
+	if count == 0 {
+		return nil, fmt.Errorf("user with id %s not found", userID)
+	}
+
 	var tasks []model.Task
-	err := r.db.Where(&model.Task{UserID: userID}).Find(&tasks).Error
+	err = r.db.Where(&model.Task{UserID: userID}).Find(&tasks).Error
 	return tasks, err
 }
 
 func (r *taskRepository) GetByUserIDAndStatus(ctx context.Context, userID uuid.UUID, status model.TaskStatus) ([]model.Task, error) {
+	var count int64
+	err := r.db.Model(&model.User{}).Where("id = ?", userID).Count(&count).Error
+	if err != nil {
+		return nil, err
+	}
+	if count == 0 {
+		return nil, fmt.Errorf("user with id %s not found", userID)
+	}
+
 	var tasks []model.Task
-	err := r.db.Where(&model.Task{UserID: userID, Status: status}).Find(&tasks).Error
+	err = r.db.Where(&model.Task{UserID: userID, Status: status}).Find(&tasks).Error
 	return tasks, err
 }
 
@@ -66,5 +96,12 @@ func (r *taskRepository) Update(ctx context.Context, id uuid.UUID, description s
 }
 
 func (r *taskRepository) Delete(ctx context.Context, id uuid.UUID) error {
-	return r.db.Delete(&model.Task{}, id).Error
+	result := r.db.Delete(&model.Task{}, id)
+	if result.Error != nil {
+		return result.Error
+	}
+	if result.RowsAffected == 0 {
+		return fmt.Errorf("no task found with id %s", id)
+	}
+	return nil
 }
