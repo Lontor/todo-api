@@ -27,6 +27,12 @@ func (r *userRepository) Create(ctx context.Context, user model.User) error {
 	return r.db.Create(&user).Error
 }
 
+func (r *userRepository) Get(ctx context.Context) ([]model.User, error) {
+	var users []model.User
+	err := r.db.Find(&users).Error
+	return users, err
+}
+
 func (r *userRepository) GetByEmail(ctx context.Context, email string) (model.User, error) {
 	var user model.User
 	err := r.db.Where(&model.User{Email: email}).First(&user).Error
