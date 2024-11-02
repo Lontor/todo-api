@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"testing"
+	"time"
 
 	"github.com/Lontor/todo-api/internal/model"
 	"github.com/google/uuid"
@@ -200,17 +201,22 @@ func TestUpdateTask_Success(t *testing.T) {
 	err = db.Create(&task).Error
 	require.NoError(t, err)
 
-	newDescription := "Updated task description"
-	newStatus := model.StatusInProgress
+	task = model.Task{
+		ID:          task.ID,
+		UserID:      task.UserID,
+		Description: "Updated task description",
+		Status:      model.StatusInProgress,
+		UpdatedAt:   time.Now(),
+	}
 
-	err = taskRepo.Update(context.Background(), task.ID, newDescription, newStatus)
+	err = taskRepo.Update(context.Background(), task)
 	assert.NoError(t, err)
 
 	var updatedTask model.Task
 	err = db.First(&updatedTask, task.ID).Error
 	require.NoError(t, err)
-	assert.Equal(t, newDescription, updatedTask.Description)
-	assert.Equal(t, newStatus, updatedTask.Status)
+	assert.Equal(t, task.Description, updatedTask.Description)
+	assert.Equal(t, task.Status, updatedTask.Status)
 }
 
 func TestUpdateTask_PartialUpdate(t *testing.T) {
@@ -225,34 +231,44 @@ func TestUpdateTask_PartialUpdate(t *testing.T) {
 	err = db.Create(&task).Error
 	require.NoError(t, err)
 
-	newDescription := "Updated description only"
+	task = model.Task{
+		ID:          task.ID,
+		Description: "Updated description only",
+		UpdatedAt:   time.Now(),
+	}
 
-	err = taskRepo.Update(context.Background(), task.ID, newDescription, "")
+	err = taskRepo.Update(context.Background(), task)
 	assert.NoError(t, err)
 
 	var updatedTask model.Task
 	err = db.First(&updatedTask, task.ID).Error
 	require.NoError(t, err)
-	assert.Equal(t, newDescription, updatedTask.Description)
-	assert.Equal(t, task.Status, updatedTask.Status)
+	assert.Equal(t, task.Description, updatedTask.Description)
 
-	newStatus := model.StatusDone
+	task = model.Task{
+		ID:        task.ID,
+		Status:    model.StatusDone,
+		UpdatedAt: time.Now(),
+	}
 
-	err = taskRepo.Update(context.Background(), task.ID, "", newStatus)
+	err = taskRepo.Update(context.Background(), task)
 	assert.NoError(t, err)
 
 	err = db.First(&updatedTask, task.ID).Error
 	require.NoError(t, err)
-	assert.Equal(t, newStatus, updatedTask.Status)
-	assert.Equal(t, newDescription, updatedTask.Description)
+	assert.Equal(t, task.Status, updatedTask.Status)
 }
 
 func TestUpdateTask_NotFound(t *testing.T) {
 	clearDB()
 
-	nonExistentID := uuid.New()
+	task := model.Task{
+		ID:        uuid.New(),
+		Status:    model.StatusDone,
+		UpdatedAt: time.Now(),
+	}
 
-	err := taskRepo.Update(context.Background(), nonExistentID, "Some description", model.StatusDone)
+	err := taskRepo.Update(context.Background(), task)
 	assert.Error(t, err)
 	assert.Contains(t, err.Error(), "no task found with id")
 }
@@ -269,7 +285,7 @@ func TestUpdateTask_NoFieldsToUpdate(t *testing.T) {
 	err = db.Create(&task).Error
 	require.NoError(t, err)
 
-	err = taskRepo.Update(context.Background(), task.ID, "", "")
+	err = taskRepo.Update(context.Background(), model.Task{ID: task.ID})
 	assert.Error(t, err)
 	assert.Contains(t, err.Error(), "no fields to update")
 }

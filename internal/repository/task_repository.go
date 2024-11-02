@@ -12,6 +12,6 @@ type TaskRepository interface {
 	GetByUserID(ctx context.Context, userID uuid.UUID) ([]model.Task, error)
 	GetByUserIDAndStatus(ctx context.Context, userID uuid.UUID, status model.TaskStatus) ([]model.Task, error)
 	GetByID(ctx context.Context, id uuid.UUID) (model.Task, error)
-	Update(ctx context.Context, id uuid.UUID, description string, status model.TaskStatus) error
+	Update(ctx context.Context, task model.Task) error
 	Delete(ctx context.Context, id uuid.UUID) error
 }

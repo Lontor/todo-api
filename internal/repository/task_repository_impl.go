@@ -69,27 +69,29 @@ func (r *taskRepository) GetByID(ctx context.Context, id uuid.UUID) (model.Task,
 	return task, err
 }
 
-func (r *taskRepository) Update(ctx context.Context, id uuid.UUID, description string, status model.TaskStatus) error {
+func (r *taskRepository) Update(ctx context.Context, task model.Task) error {
 	updates := map[string]interface{}{}
 
-	if description != "" {
-		updates["description"] = description
+	if task.Description != "" {
+		updates["description"] = task.Description
 	}
-	if status != "" {
-		updates["status"] = status
+	if task.Status != "" {
+		updates["status"] = task.Status
 	}
 
 	if len(updates) == 0 {
 		return fmt.Errorf("no fields to update")
 	}
 
-	result := r.db.Model(&model.Task{}).Where("id = ?", id).Updates(updates)
+	updates["updated_at"] = task.UpdatedAt
+
+	result := r.db.Model(&model.Task{}).Where("id = ?", task.ID).Updates(updates)
 	if result.Error != nil {
 		return result.Error
 	}
 
 	if result.RowsAffected == 0 {
-		return fmt.Errorf("no task found with id %s", id)
+		return fmt.Errorf("no task found with id %s", task.ID)
 	}
 
 	return nil
