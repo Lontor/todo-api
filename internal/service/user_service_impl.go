@@ -9,6 +9,7 @@ import (
 	"github.com/Lontor/todo-api/internal/model"
 	"github.com/Lontor/todo-api/internal/repository"
 	"github.com/Lontor/todo-api/pkg/custom_errors"
+	"github.com/go-playground/validator/v10"
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/google/uuid"
 	"golang.org/x/crypto/bcrypt"
@@ -16,16 +17,22 @@ import (
 
 type userService struct {
 	r repository.UserRepository
+	v *validator.Validate
 }
 
 func NewUserService(r repository.UserRepository) UserService {
-	return &userService{r}
+	return &userService{
+		r: r,
+		v: validator.New(),
+	}
 }
 
 func (s *userService) CreateUser(ctx context.Context, data dto.RegisterRequest) error {
+	if err := s.v.Struct(data); err != nil {
+		return custom_errors.NewHTTPError(http.StatusBadRequest, err.Error())
+	}
 
 	passwordHash, err := bcrypt.GenerateFromPassword([]byte(data.Password), 14)
-
 	if err != nil {
 		return custom_errors.NewHTTPError(http.StatusInternalServerError, "hash generation error")
 	}
@@ -34,7 +41,7 @@ func (s *userService) CreateUser(ctx context.Context, data dto.RegisterRequest) 
 		if role != model.UserTypeAdmin {
 			return custom_errors.NewHTTPError(http.StatusForbidden, "permission denied")
 		}
-		s.r.Create(ctx, model.User{
+		return s.r.Create(ctx, model.User{
 			ID:           uuid.New(),
 			Email:        data.Email,
 			PasswordHash: string(passwordHash),
@@ -76,19 +83,30 @@ func (s *userService) GetUserByID(ctx context.Context, id uuid.UUID) (model.User
 }
 
 func (s *userService) UpdateUser(ctx context.Context, data dto.UpdateUserRequest) error {
+	if err := s.v.Struct(data); err != nil {
+		return custom_errors.NewHTTPError(http.StatusBadRequest, err.Error())
+	}
+
 	userID := ctx.Value("userID").(uuid.UUID)
 	role := ctx.Value("role").(model.UserType)
 
 	if role != model.UserTypeAdmin {
-		if userID != data.UserID || data.Role != model.UserTypeRegular {
+		if userID != data.UserID || data.Role == model.UserTypeAdmin {
 			return custom_errors.NewHTTPError(http.StatusForbidden, "permission denied")
 		}
 	}
 
-	passwordHash, err := bcrypt.GenerateFromPassword([]byte(data.Password), 14)
+	if data.Email == "" && data.Password == "" && data.Role == "" {
+		return custom_errors.NewHTTPError(http.StatusBadRequest, "no fields to update")
+	}
 
-	if err != nil {
-		return custom_errors.NewHTTPError(http.StatusInternalServerError, "hash generation error")
+	var passwordHash []byte
+	if data.Password != "" {
+		var err error
+		passwordHash, err = bcrypt.GenerateFromPassword([]byte(data.Password), 14)
+		if err != nil {
+			return custom_errors.NewHTTPError(http.StatusInternalServerError, "hash generation error")
+		}
 	}
 
 	return s.r.Update(ctx, model.User{
