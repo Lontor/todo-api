@@ -17,8 +17,8 @@ type taskService struct {
 	r repository.TaskRepository
 }
 
-func NewTaskService(r *repository.TaskRepository) TaskService {
-	return &taskService{*r}
+func NewTaskService(r repository.TaskRepository) TaskService {
+	return &taskService{r}
 }
 
 func (s *taskService) CreateTask(ctx context.Context, data dto.CreateTaskRequest) error {
@@ -54,7 +54,11 @@ func (s *taskService) GetTasksByUser(ctx context.Context, userID uuid.UUID, stat
 		}
 	}
 
-	return s.r.GetByUserID(ctx, userID)
+	if status == "" {
+		return s.r.GetByUserID(ctx, userID)
+	}
+
+	return s.r.GetByUserIDAndStatus(ctx, userID, status)
 }
 
 func (s *taskService) GetTaskByID(ctx context.Context, id uuid.UUID) (model.Task, error) {
@@ -85,10 +89,14 @@ func (s *taskService) UpdateTask(ctx context.Context, data dto.UpdateTaskRequest
 		}
 	}
 
+	if data.Description == "" && data.Status == "" {
+		return custom_errors.NewHTTPError(http.StatusBadRequest, "no fields to update")
+	}
+
 	return s.r.Update(ctx, model.Task{
 		ID:          data.TaskID,
-		Description: *data.Description,
-		Status:      *data.Status,
+		Description: data.Description,
+		Status:      data.Status,
 		UpdatedAt:   time.Now(),
 	})
 }
