@@ -18,8 +18,8 @@ type userService struct {
 	r repository.UserRepository
 }
 
-func NewUserService(r *repository.UserRepository) UserService {
-	return &userService{*r}
+func NewUserService(r repository.UserRepository) UserService {
+	return &userService{r}
 }
 
 func (s *userService) CreateUser(ctx context.Context, data dto.RegisterRequest) error {
