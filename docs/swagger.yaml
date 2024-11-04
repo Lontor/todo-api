@@ -1,0 +1,570 @@
+definitions:
+  custom_errors.HTTPError:
+    properties:
+      code:
+        type: integer
+      message:
+        type: string
+    type: object
+  dto.AuthResponse:
+    properties:
+      expiresAt:
+        type: string
+      token:
+        type: string
+      userID:
+        type: string
+    type: object
+  dto.CreateTaskRequest:
+    properties:
+      description:
+        maxLength: 200
+        minLength: 10
+        type: string
+    required:
+    - description
+    type: object
+  dto.HealthResponse:
+    properties:
+      status:
+        type: string
+    type: object
+  dto.LoginRequest:
+    properties:
+      email:
+        type: string
+      password:
+        type: string
+    required:
+    - email
+    - password
+    type: object
+  dto.RegisterRequest:
+    properties:
+      email:
+        type: string
+      password:
+        minLength: 8
+        type: string
+      role:
+        allOf:
+        - $ref: '#/definitions/model.UserType'
+        enum:
+        - regular
+        - admin
+    required:
+    - email
+    - password
+    type: object
+  dto.UpdateTaskRequest:
+    properties:
+      description:
+        maxLength: 200
+        minLength: 10
+        type: string
+      status:
+        allOf:
+        - $ref: '#/definitions/model.TaskStatus'
+        enum:
+        - to do
+        - in progress
+        - done
+    type: object
+  dto.UpdateUserRequest:
+    properties:
+      email:
+        type: string
+      password:
+        minLength: 8
+        type: string
+      role:
+        allOf:
+        - $ref: '#/definitions/model.UserType'
+        enum:
+        - regular
+        - admin
+    type: object
+  model.Task:
+    properties:
+      createdAt:
+        type: string
+      description:
+        maxLength: 200
+        minLength: 10
+        type: string
+      id:
+        type: string
+      status:
+        $ref: '#/definitions/model.TaskStatus'
+      updatedAt:
+        type: string
+      userId:
+        type: string
+    required:
+    - createdAt
+    - description
+    - id
+    - status
+    - updatedAt
+    - userId
+    type: object
+  model.TaskStatus:
+    enum:
+    - to do
+    - in progress
+    - Done
+    type: string
+    x-enum-varnames:
+    - StatusTodo
+    - StatusInProgress
+    - StatusDone
+  model.User:
+    properties:
+      accountType:
+        $ref: '#/definitions/model.UserType'
+      createdAt:
+        type: string
+      email:
+        type: string
+      id:
+        type: string
+    required:
+    - accountType
+    - email
+    type: object
+  model.UserType:
+    enum:
+    - regular
+    - admin
+    type: string
+    x-enum-varnames:
+    - UserTypeRegular
+    - UserTypeAdmin
+info:
+  contact: {}
+paths:
+  /auth/login:
+    post:
+      consumes:
+      - application/json
+      description: Login user with email and password
+      parameters:
+      - description: Login Request
+        in: body
+        name: login
+        required: true
+        schema:
+          $ref: '#/definitions/dto.LoginRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dto.AuthResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/custom_errors.HTTPError'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/custom_errors.HTTPError'
+      summary: User login
+      tags:
+      - auth
+  /auth/register:
+    post:
+      consumes:
+      - application/json
+      description: Register a new user
+      parameters:
+      - description: Register Request
+        in: body
+        name: register
+        required: true
+        schema:
+          $ref: '#/definitions/dto.RegisterRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/custom_errors.HTTPError'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/custom_errors.HTTPError'
+      summary: User registration
+      tags:
+      - auth
+  /health:
+    get:
+      consumes:
+      - application/json
+      description: get the status of server.
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dto.HealthResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/custom_errors.HTTPError'
+      summary: Show the status of server.
+      tags:
+      - health
+  /users:
+    get:
+      consumes:
+      - application/json
+      description: Get a list of all users
+      parameters:
+      - description: Bearer token
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/model.User'
+            type: array
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/custom_errors.HTTPError'
+      summary: Get all users
+      tags:
+      - users
+  /users/{userID}:
+    delete:
+      consumes:
+      - application/json
+      description: Delete a user by their ID
+      parameters:
+      - description: User ID
+        in: path
+        name: userID
+        required: true
+        type: string
+      - description: Bearer token
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/custom_errors.HTTPError'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/custom_errors.HTTPError'
+      summary: Delete a user
+      tags:
+      - users
+    get:
+      consumes:
+      - application/json
+      description: Get a user by their ID
+      parameters:
+      - description: User ID
+        in: path
+        name: userID
+        required: true
+        type: string
+      - description: Bearer token
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.User'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/custom_errors.HTTPError'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/custom_errors.HTTPError'
+      summary: Get a user by ID
+      tags:
+      - users
+    put:
+      consumes:
+      - application/json
+      description: Update a user by their ID
+      parameters:
+      - description: User ID
+        in: path
+        name: userID
+        required: true
+        type: string
+      - description: Update User Request
+        in: body
+        name: update
+        required: true
+        schema:
+          $ref: '#/definitions/dto.UpdateUserRequest'
+      - description: Bearer token
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/custom_errors.HTTPError'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/custom_errors.HTTPError'
+      summary: Update a user
+      tags:
+      - users
+  /users/{userID}/tasks:
+    get:
+      consumes:
+      - application/json
+      description: Get tasks for a user by their ID
+      parameters:
+      - description: User ID
+        in: path
+        name: userID
+        required: true
+        type: string
+      - description: Task status filter
+        in: query
+        name: filter
+        type: string
+      - description: Bearer token
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/model.Task'
+            type: array
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/custom_errors.HTTPError'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/custom_errors.HTTPError'
+      summary: Get tasks for a user
+      tags:
+      - tasks
+    post:
+      consumes:
+      - application/json
+      description: Create a new task for a user by their ID
+      parameters:
+      - description: User ID
+        in: path
+        name: userID
+        required: true
+        type: string
+      - description: Create Task Request
+        in: body
+        name: create
+        required: true
+        schema:
+          $ref: '#/definitions/dto.CreateTaskRequest'
+      - description: Bearer token
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/custom_errors.HTTPError'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/custom_errors.HTTPError'
+      summary: Create a new task for a user
+      tags:
+      - tasks
+  /users/{userID}/tasks/{taskID}:
+    delete:
+      consumes:
+      - application/json
+      description: Delete a task for a user by their ID and task ID
+      parameters:
+      - description: User ID
+        in: path
+        name: userID
+        required: true
+        type: string
+      - description: Task ID
+        in: path
+        name: taskID
+        required: true
+        type: string
+      - description: Bearer token
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/custom_errors.HTTPError'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/custom_errors.HTTPError'
+      summary: Delete a task for a user
+      tags:
+      - tasks
+    get:
+      consumes:
+      - application/json
+      description: Get a task for a user by their ID and task ID
+      parameters:
+      - description: User ID
+        in: path
+        name: userID
+        required: true
+        type: string
+      - description: Task ID
+        in: path
+        name: taskID
+        required: true
+        type: string
+      - description: Bearer token
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.Task'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/custom_errors.HTTPError'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/custom_errors.HTTPError'
+      summary: Get a task for a user
+      tags:
+      - tasks
+    patch:
+      consumes:
+      - application/json
+      description: Update a task for a user by their ID and task ID
+      parameters:
+      - description: User ID
+        in: path
+        name: userID
+        required: true
+        type: string
+      - description: Task ID
+        in: path
+        name: taskID
+        required: true
+        type: string
+      - description: Bearer token
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      - description: Update Task Request
+        in: body
+        name: update
+        required: true
+        schema:
+          $ref: '#/definitions/dto.UpdateTaskRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/custom_errors.HTTPError'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/custom_errors.HTTPError'
+      summary: Update a task for a user
+      tags:
+      - tasks
+swagger: "2.0"
