@@ -37,6 +37,10 @@ func (s *userService) CreateUser(ctx context.Context, data dto.RegisterRequest) 
 		return custom_errors.NewHTTPError(http.StatusInternalServerError, "hash generation error")
 	}
 
+	if data.Role == "" {
+		data.Role = model.UserTypeRegular
+	}
+
 	if role, ok := ctx.Value("role").(model.UserType); ok {
 		if role != model.UserTypeAdmin {
 			return custom_errors.NewHTTPError(http.StatusForbidden, "permission denied")
@@ -155,6 +159,7 @@ func (s *userService) AuthenticateUser(ctx context.Context, email, password stri
 
 	return dto.AuthResponse{
 		Token:     tokenString,
+		UserID:    user.ID,
 		ExpiresAt: expirationTime,
 	}, nil
 }

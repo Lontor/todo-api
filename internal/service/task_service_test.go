@@ -197,7 +197,7 @@ func TestGetTaskByID(t *testing.T) {
 
 		mockRepo.On("GetByID", ctx, task.ID).Return(task, nil)
 
-		result, err := taskService.GetTaskByID(ctx, task.ID)
+		result, err := taskService.GetTaskByID(ctx, task.ID, task.UserID)
 
 		assert.NoError(t, err)
 		assert.Equal(t, task, result)
@@ -211,7 +211,7 @@ func TestGetTaskByID(t *testing.T) {
 
 		mockRepo.On("GetByID", ctx, task.ID).Return(task, nil)
 
-		result, err := taskService.GetTaskByID(ctx, task.ID)
+		result, err := taskService.GetTaskByID(ctx, task.ID, task.UserID)
 
 		assert.Equal(t, model.Task{}, result)
 		var httpErr *custom_errors.HTTPError
@@ -226,7 +226,7 @@ func TestGetTaskByID(t *testing.T) {
 
 		mockRepo.On("GetByID", ctx, task.ID).Return(model.Task{}, fmt.Errorf("record not found"))
 
-		result, err := taskService.GetTaskByID(ctx, task.ID)
+		result, err := taskService.GetTaskByID(ctx, task.ID, task.UserID)
 
 		assert.Equal(t, model.Task{}, result)
 		assert.Error(t, err)
@@ -350,7 +350,7 @@ func TestDeleteTask(t *testing.T) {
 		mockRepo.On("GetByID", ctx, task.ID).Return(task, nil)
 		mockRepo.On("Delete", ctx, task.ID).Return(nil)
 
-		err := taskService.DeleteTask(ctx, task.ID)
+		err := taskService.DeleteTask(ctx, task.ID, task.UserID)
 
 		assert.NoError(t, err)
 		mockRepo.AssertCalled(t, "GetByID", ctx, task.ID)
@@ -365,7 +365,7 @@ func TestDeleteTask(t *testing.T) {
 		mockRepo.On("GetByID", ctx, task.ID).Return(task, nil)
 		mockRepo.On("Delete", ctx, task.ID).Return(nil)
 
-		err := taskService.DeleteTask(ctx, task.ID)
+		err := taskService.DeleteTask(ctx, task.ID, task.UserID)
 
 		assert.NoError(t, err)
 		mockRepo.AssertCalled(t, "GetByID", ctx, task.ID)
@@ -379,7 +379,7 @@ func TestDeleteTask(t *testing.T) {
 
 		mockRepo.On("GetByID", ctx, task.ID).Return(task, nil)
 
-		err := taskService.DeleteTask(ctx, task.ID)
+		err := taskService.DeleteTask(ctx, task.ID, task.UserID)
 
 		var httpErr *custom_errors.HTTPError
 		assert.ErrorAs(t, err, &httpErr)
@@ -393,7 +393,7 @@ func TestDeleteTask(t *testing.T) {
 
 		mockRepo.On("GetByID", ctx, task.ID).Return(model.Task{}, fmt.Errorf("no task found with id %s", task.ID))
 
-		err := taskService.DeleteTask(ctx, task.ID)
+		err := taskService.DeleteTask(ctx, task.ID, task.UserID)
 
 		assert.Error(t, err)
 		assert.EqualError(t, err, "no task found with id "+task.ID.String())
@@ -408,7 +408,7 @@ func TestDeleteTask(t *testing.T) {
 		mockRepo.On("GetByID", ctx, task.ID).Return(task, nil)
 		mockRepo.On("Delete", ctx, task.ID).Return(fmt.Errorf("db error"))
 
-		err := taskService.DeleteTask(ctx, task.ID)
+		err := taskService.DeleteTask(ctx, task.ID, task.UserID)
 
 		assert.Error(t, err)
 		assert.EqualError(t, err, "db error")

@@ -61,7 +61,7 @@ func (s *taskService) GetTasksByUser(ctx context.Context, userID uuid.UUID, stat
 	return s.r.GetByUserIDAndStatus(ctx, userID, status)
 }
 
-func (s *taskService) GetTaskByID(ctx context.Context, id uuid.UUID) (model.Task, error) {
+func (s *taskService) GetTaskByID(ctx context.Context, id uuid.UUID, user uuid.UUID) (model.Task, error) {
 	userID := ctx.Value("userID").(uuid.UUID)
 	role := ctx.Value("role").(model.UserType)
 
@@ -74,6 +74,10 @@ func (s *taskService) GetTaskByID(ctx context.Context, id uuid.UUID) (model.Task
 		if userID != task.UserID {
 			return model.Task{}, custom_errors.NewHTTPError(http.StatusForbidden, "permission denied")
 		}
+	}
+
+	if task.UserID != user {
+		return model.Task{}, custom_errors.NewHTTPError(http.StatusNotFound, "user not found")
 	}
 
 	return task, nil
@@ -101,13 +105,17 @@ func (s *taskService) UpdateTask(ctx context.Context, data dto.UpdateTaskRequest
 	})
 }
 
-func (s *taskService) DeleteTask(ctx context.Context, id uuid.UUID) error {
+func (s *taskService) DeleteTask(ctx context.Context, id uuid.UUID, user uuid.UUID) error {
 	userID := ctx.Value("userID").(uuid.UUID)
 	role := ctx.Value("role").(model.UserType)
 
 	task, err := s.r.GetByID(ctx, id)
 	if err != nil {
 		return err
+	}
+
+	if task.UserID != user {
+		return custom_errors.NewHTTPError(http.StatusNotFound, "user not found")
 	}
 
 	if role != model.UserTypeAdmin {
