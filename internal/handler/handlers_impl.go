@@ -445,7 +445,7 @@ func (h *apiHandler) DeleteUserTask(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
 
-	response := map[string]string{"message": "Task updated successfully"}
+	response := map[string]string{"message": "Task deleted successfully"}
 	if err := json.NewEncoder(w).Encode(response); err != nil {
 		http.Error(w, "Failed to encode response", http.StatusInternalServerError)
 	}
