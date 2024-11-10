@@ -197,7 +197,7 @@ func TestGetTaskByID(t *testing.T) {
 
 		mockRepo.On("GetByID", ctx, task.ID).Return(task, nil)
 
-		result, err := taskService.GetTaskByID(ctx, task.ID, task.UserID)
+		result, err := taskService.GetTaskByID(ctx, task.ID)
 
 		assert.NoError(t, err)
 		assert.Equal(t, task, result)
@@ -211,7 +211,7 @@ func TestGetTaskByID(t *testing.T) {
 
 		mockRepo.On("GetByID", ctx, task.ID).Return(task, nil)
 
-		result, err := taskService.GetTaskByID(ctx, task.ID, task.UserID)
+		result, err := taskService.GetTaskByID(ctx, task.ID)
 
 		assert.Equal(t, model.Task{}, result)
 		var httpErr *custom_errors.HTTPError
@@ -226,7 +226,7 @@ func TestGetTaskByID(t *testing.T) {
 
 		mockRepo.On("GetByID", ctx, task.ID).Return(model.Task{}, fmt.Errorf("record not found"))
 
-		result, err := taskService.GetTaskByID(ctx, task.ID, task.UserID)
+		result, err := taskService.GetTaskByID(ctx, task.ID)
 
 		assert.Equal(t, model.Task{}, result)
 		assert.Error(t, err)
@@ -249,7 +249,6 @@ func TestUpdateTask(t *testing.T) {
 
 		data := dto.UpdateTaskRequest{
 			TaskID:      taskID,
-			UserID:      userID,
 			Description: "Updated task description",
 			Status:      model.StatusInProgress,
 		}
@@ -271,7 +270,6 @@ func TestUpdateTask(t *testing.T) {
 
 		data := dto.UpdateTaskRequest{
 			TaskID:      taskID,
-			UserID:      userID,
 			Description: "Updated task description",
 			Status:      model.StatusInProgress,
 		}
@@ -293,7 +291,6 @@ func TestUpdateTask(t *testing.T) {
 
 		data := dto.UpdateTaskRequest{
 			TaskID:      taskID,
-			UserID:      userID,
 			Description: "",
 			Status:      "",
 		}
@@ -314,7 +311,6 @@ func TestUpdateTask(t *testing.T) {
 
 		data := dto.UpdateTaskRequest{
 			TaskID:      taskID,
-			UserID:      userID,
 			Description: "Updated task description",
 			Status:      model.StatusInProgress,
 		}
