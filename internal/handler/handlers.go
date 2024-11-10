@@ -17,7 +17,8 @@ type APIHandler interface {
 
 	GetUserTasks(w http.ResponseWriter, r *http.Request)   // GET /users/{userID}/tasks
 	CreateUserTask(w http.ResponseWriter, r *http.Request) // POST /users/{userID}/tasks
-	GetUserTask(w http.ResponseWriter, r *http.Request)    // GET /users/{userID}/tasks/{taskID}
-	UpdateUserTask(w http.ResponseWriter, r *http.Request) // PATCH /users/{userID}/tasks/{taskID}
-	DeleteUserTask(w http.ResponseWriter, r *http.Request) // DELETE /users/{userID}/tasks/{taskID}
+
+	GetUserTask(w http.ResponseWriter, r *http.Request)    // GET /tasks/{taskID}
+	UpdateUserTask(w http.ResponseWriter, r *http.Request) // PATCH /tasks/{taskID}
+	DeleteUserTask(w http.ResponseWriter, r *http.Request) // DELETE /tasks/{taskID}
 }

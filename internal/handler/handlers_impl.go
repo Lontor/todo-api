@@ -332,21 +332,15 @@ func (h *apiHandler) CreateUserTask(w http.ResponseWriter, r *http.Request) {
 // @Success 200 {object} model.Task
 // @Failure 400 {object} custom_errors.HTTPError
 // @Failure 500 {object} custom_errors.HTTPError
-// @Router /users/{userID}/tasks/{taskID} [get]
+// @Router /tasks/{taskID} [get]
 func (h *apiHandler) GetUserTask(w http.ResponseWriter, r *http.Request) {
-	userID, err := uuid.Parse(chi.URLParam(r, "userID"))
-	if err != nil {
-		http.Error(w, "Invalid userID format", http.StatusBadRequest)
-		return
-	}
-
 	taskID, err := uuid.Parse(chi.URLParam(r, "taskID"))
 	if err != nil {
 		http.Error(w, "Invalid taskID format", http.StatusBadRequest)
 		return
 	}
 
-	response, err := h.taskService.GetTaskByID(r.Context(), taskID, userID)
+	response, err := h.taskService.GetTaskByID(r.Context(), taskID)
 	if err != nil {
 		handleServiceError(w, err)
 		return
@@ -373,16 +367,10 @@ func (h *apiHandler) GetUserTask(w http.ResponseWriter, r *http.Request) {
 // @Success 200 {object} map[string]string
 // @Failure 400 {object} custom_errors.HTTPError
 // @Failure 500 {object} custom_errors.HTTPError
-// @Router /users/{userID}/tasks/{taskID} [patch]
+// @Router /tasks/{taskID} [patch]
 func (h *apiHandler) UpdateUserTask(w http.ResponseWriter, r *http.Request) {
 	var req dto.UpdateTaskRequest
 	if err := decodeJSONBody(w, r, &req); err != nil {
-		return
-	}
-
-	userID, err := uuid.Parse(chi.URLParam(r, "userID"))
-	if err != nil {
-		http.Error(w, "Invalid userID format", http.StatusBadRequest)
 		return
 	}
 
@@ -392,7 +380,6 @@ func (h *apiHandler) UpdateUserTask(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	req.UserID = userID
 	req.TaskID = taskID
 
 	err = h.taskService.UpdateTask(r.Context(), req)
@@ -422,13 +409,8 @@ func (h *apiHandler) UpdateUserTask(w http.ResponseWriter, r *http.Request) {
 // @Success 200 {object} map[string]string
 // @Failure 400 {object} custom_errors.HTTPError
 // @Failure 500 {object} custom_errors.HTTPError
-// @Router /users/{userID}/tasks/{taskID} [delete]
+// @Router /tasks/{taskID} [delete]
 func (h *apiHandler) DeleteUserTask(w http.ResponseWriter, r *http.Request) {
-	userID, err := uuid.Parse(chi.URLParam(r, "userID"))
-	if err != nil {
-		http.Error(w, "Invalid userID format", http.StatusBadRequest)
-		return
-	}
 
 	taskID, err := uuid.Parse(chi.URLParam(r, "taskID"))
 	if err != nil {
@@ -436,7 +418,7 @@ func (h *apiHandler) DeleteUserTask(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = h.taskService.DeleteTask(r.Context(), taskID, userID)
+	err = h.taskService.DeleteTask(r.Context(), taskID)
 	if err != nil {
 		handleServiceError(w, err)
 		return
