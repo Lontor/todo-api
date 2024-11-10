@@ -11,10 +11,9 @@ type CreateTaskRequest struct {
 	UserID      uuid.UUID `json:"-" validate:"required"`
 }
 
-// PATCH /users/{userID}/tasks/{taskID}
+// PATCH /tasks/{taskID}
 type UpdateTaskRequest struct {
 	Description string           `json:"description,omitempty" validate:"omitempty,min=3,max=200"`
 	Status      model.TaskStatus `json:"status,omitempty" validate:"omitempty,oneof='to do' 'in progress' 'done'"`
-	UserID      uuid.UUID        `json:"-" validate:"required"`
 	TaskID      uuid.UUID        `json:"-" validate:"required"`
 }
