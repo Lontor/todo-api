@@ -13,5 +13,5 @@ type TaskService interface {
 	GetTasksByUser(ctx context.Context, userID uuid.UUID, status model.TaskStatus) ([]model.Task, error)
 	GetTaskByID(ctx context.Context, id uuid.UUID) (model.Task, error)
 	UpdateTask(ctx context.Context, data dto.UpdateTaskRequest) error
-	DeleteTask(ctx context.Context, id uuid.UUID, userID uuid.UUID) error
+	DeleteTask(ctx context.Context, id uuid.UUID) error
 }

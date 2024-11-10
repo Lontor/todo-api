@@ -118,17 +118,13 @@ func (s *taskService) UpdateTask(ctx context.Context, data dto.UpdateTaskRequest
 	return utils.RepositoryErrorToHTTPError(s.r.Update(ctx, task))
 }
 
-func (s *taskService) DeleteTask(ctx context.Context, id uuid.UUID, user uuid.UUID) error {
+func (s *taskService) DeleteTask(ctx context.Context, id uuid.UUID) error {
 	userID := ctx.Value("userID").(uuid.UUID)
 	role := ctx.Value("role").(model.UserType)
 
 	task, err := s.r.GetByID(ctx, id)
 	if err != nil {
 		return utils.RepositoryErrorToHTTPError(err)
-	}
-
-	if task.UserID != user {
-		return custom_errors.NewHTTPError(http.StatusNotFound, "user not found")
 	}
 
 	if role != model.UserTypeAdmin {
