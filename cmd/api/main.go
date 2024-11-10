@@ -52,9 +52,10 @@ func main() {
 
 	router.Get("/users/{userID}/tasks", handlers.GetUserTasks)
 	router.Post("/users/{userID}/tasks", handlers.CreateUserTask)
-	router.Get("/users/{userID}/tasks/{taskID}", handlers.GetUserTask)
-	router.Patch("/users/{userID}/tasks/{taskID}", handlers.UpdateUserTask)
-	router.Delete("/users/{userID}/tasks/{taskID}", handlers.DeleteUserTask)
+
+	router.Get("/tasks/{taskID}", handlers.GetUserTask)
+	router.Patch("/tasks/{taskID}", handlers.UpdateUserTask)
+	router.Delete("/tasks/{taskID}", handlers.DeleteUserTask)
 
 	log.Println("Starting server on :8080...")
 	http.ListenAndServe(":8080", router)
