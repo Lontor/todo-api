@@ -9,6 +9,7 @@ import (
 	"github.com/Lontor/todo-api/internal/model"
 	"github.com/Lontor/todo-api/internal/repository"
 	"github.com/Lontor/todo-api/pkg/custom_errors"
+	"github.com/Lontor/todo-api/pkg/utils"
 	"github.com/go-playground/validator/v10"
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/google/uuid"
@@ -45,24 +46,25 @@ func (s *userService) CreateUser(ctx context.Context, data dto.RegisterRequest) 
 		if role != model.UserTypeAdmin {
 			return custom_errors.NewHTTPError(http.StatusForbidden, "permission denied")
 		}
-		return s.r.Create(ctx, model.User{
+		return utils.RepositoryErrorToHTTPError(s.r.Create(ctx, model.User{
 			ID:           uuid.New(),
 			Email:        data.Email,
 			PasswordHash: string(passwordHash),
 			AccountType:  data.Role,
-		})
+		}))
 	}
 
 	if data.Role != model.UserTypeRegular {
 		return custom_errors.NewHTTPError(http.StatusForbidden, "permission denied")
 	}
 
-	return s.r.Create(ctx, model.User{
+	err = s.r.Create(ctx, model.User{
 		ID:           uuid.New(),
 		Email:        data.Email,
 		PasswordHash: string(passwordHash),
 		AccountType:  data.Role,
 	})
+	return utils.RepositoryErrorToHTTPError(err)
 }
 
 func (s *userService) GetUsers(ctx context.Context) ([]model.User, error) {
@@ -83,7 +85,8 @@ func (s *userService) GetUserByID(ctx context.Context, id uuid.UUID) (model.User
 		}
 	}
 
-	return s.r.GetByID(ctx, id)
+	user, err := s.r.GetByID(ctx, id)
+	return user, utils.RepositoryErrorToHTTPError(err)
 }
 
 func (s *userService) UpdateUser(ctx context.Context, data dto.UpdateUserRequest) error {
@@ -104,6 +107,16 @@ func (s *userService) UpdateUser(ctx context.Context, data dto.UpdateUserRequest
 		return custom_errors.NewHTTPError(http.StatusBadRequest, "no fields to update")
 	}
 
+	user, err := s.r.GetByID(ctx, data.UserID)
+
+	if err != nil {
+		return utils.RepositoryErrorToHTTPError(err)
+	}
+
+	if data.Email != "" {
+		user.Email = data.Email
+	}
+
 	var passwordHash []byte
 	if data.Password != "" {
 		var err error
@@ -111,14 +124,14 @@ func (s *userService) UpdateUser(ctx context.Context, data dto.UpdateUserRequest
 		if err != nil {
 			return custom_errors.NewHTTPError(http.StatusInternalServerError, "hash generation error")
 		}
+		user.PasswordHash = string(passwordHash)
 	}
 
-	return s.r.Update(ctx, model.User{
-		ID:           data.UserID,
-		Email:        data.Email,
-		PasswordHash: string(passwordHash),
-		AccountType:  data.Role,
-	})
+	if data.Role != "" {
+		user.AccountType = data.Role
+	}
+
+	return utils.RepositoryErrorToHTTPError(s.r.Update(ctx, user))
 }
 
 func (s *userService) DeleteUser(ctx context.Context, id uuid.UUID) error {
@@ -131,7 +144,7 @@ func (s *userService) DeleteUser(ctx context.Context, id uuid.UUID) error {
 		}
 	}
 
-	return s.r.Delete(ctx, id)
+	return utils.RepositoryErrorToHTTPError(s.r.Delete(ctx, id))
 }
 
 func (s *userService) AuthenticateUser(ctx context.Context, email, password string) (dto.AuthResponse, error) {
